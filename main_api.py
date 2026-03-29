@@ -2,8 +2,8 @@ import sys
 import os
 import html
 
-# Para poder importar database.py que está en la carpeta superior
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Como ahora todo está en el mismo nivel, añadimos el directorio actual al path
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -21,6 +21,15 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="ERP ROLIK API", lifespan=lifespan)
+
+# --- CONFIGURACIÓN CORS ---
+# Esto permite que tu web en GitHub Pages entre al servidor de Render
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Luego puedes poner tu URL de GitHub aquí por seguridad
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- MODELOS PYDANTIC ---
 class SaleItemSchema(BaseModel):
@@ -106,9 +115,6 @@ class SupplierSchema(BaseModel):
     direccion: str | None = ""
     telefono: str | None = ""
     email: str | None = ""
-
-# --- CONFIGURACIÓN CORS ---
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # --- MODULO: CAJA ---
 @app.get("/caja/sesion-activa")
@@ -684,7 +690,7 @@ def obtener_ticket_html(id: int, format: str = "80mm"):
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 # --- SERVIR FRONTEND ---
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pagina_web"))
+frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "pagina_web"))
 print(f"DEBUG: Sirviendo archivos estáticos desde: {frontend_path}")
 
 if os.path.exists(frontend_path):
