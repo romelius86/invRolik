@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta | ROLIK</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pos-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+        
+        .product-selection, .cart-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .search-results {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .product-item:hover { background: rgba(255,255,255,0.05); }
+
+        .cart-items {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .cart-total-section {
+            border-top: 2px solid var(--border-color);
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .cart-total-display {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: right;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        /* --- Estilos Modal Finalizar Venta (Estilo Escritorio) --- */
+        .checkout-modal-content {
+            background-color: #1e293b;
+            color: #f1f5f9;
+            font-family: 'Courier New', Courier, monospace;
+            max-width: 500px !important;
+            padding: 30px !important;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .checkout-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        .checkout-label {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: block;
+            color: #94a3b8;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 15px 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .checkout-input-group {
+            margin-bottom: 15px;
+        }
+
+        .checkout-input-group input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 12px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-checkout-search {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .vuelto-box {
+            background: #0f172a;
+            border: 1px solid #3b82f6;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .final-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 60px;
+        }
+
+        .btn-confirm { background: #22c55e; color: white; font-weight: bold; border: none; cursor: pointer; font-size: 16px; }
+        .btn-cancel { background: #ef4444; color: white; font-weight: bold; border: none; cursor: pointer; font-size: 16px; }
+        .btn-confirm:hover { opacity: 0.9; }
+        .btn-cancel:hover { opacity: 0.9; }
+
+        /* Estilo para input de precio editable en el carrito */
+        .cart-price-input {
+            width: 70px;
+            background: transparent;
+            border: 1px solid #334155;
+            color: var(--success);
+            font-weight: bold;
+            text-align: right;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
+        .cart-price-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #0f172a;
+        }
+
+        /* Estilos para botones de selección de unidades */
+        .unit-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        .unit-btn:hover {
+            background: #3b82f6;
+            transform: translateY(-2px);
+        }
+        .unit-btn strong {
+            color: #22c55e;
+            font-size: 16px;
+        }
+        .unit-btn:hover strong {
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="#" id="nav_pos" class="active"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2>Terminal de Ventas</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container">
+                <div class="pos-container">
+                    <section class="product-selection">
+                        <div style="position: relative; margin-bottom: 20px;">
+                            <i class="fas fa-barcode" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--accent-color); font-size: 18px;"></i>
+                            <input type="text" id="pos_search" placeholder="Escanee código o busque por nombre..." style="width: 100%; background: #0f172a; border: 1px solid var(--border-color); color: white; padding: 15px 15px 15px 45px; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; transition: border-color 0.2s;">
+                        </div>
+                        <div class="search-results" id="pos_results">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); opacity: 0.5; margin-top: 50px;">
+                                <i class="fas fa-barcode" style="font-size: 48px; margin-bottom: 15px;"></i>
+                                <p style="margin: 0; font-size: 16px;">Escribe para buscar productos...</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="cart-section">
+                        <h3 style="margin-top:0;">Carrito de Venta</h3>
+                        <div class="cart-items" id="cart_list"></div>
+                        
+                        <div class="cart-total-section">
+                            <div class="cart-total-display">
+                                Total: S/ <span id="total_amount">0.00</span>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%; padding: 18px; justify-content: center; font-size: 16px;" onclick="openCheckoutModal()">
+                                <i class="fas fa-check-circle"></i> REGISTRAR VENTA
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL FINALIZAR VENTA (Diseño Moderno) -->
+    <div id="checkout_modal" class="modal">
+        <div class="modal-content checkout-modal-content" style="max-width: 650px !important; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+            
+            <div class="checkout-header" style="background: #0f172a; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-bottom: 2px solid #3b82f6;">
+                <span style="color: #94a3b8; font-size: 14px; letter-spacing: 1px;">FINALIZAR TRANSACCIÓN</span>
+                <div style="font-size: 32px; color: #22c55e; font-weight: 800; margin-top: 5px;">S/ <span id="chk_total">0.00</span></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <!-- Columna Izquierda: Documentos y Métodos -->
+                <div style="background: #1e293b; padding: 15px; border-radius: 10px; border: 1px solid #334155;">
+                    <label class="checkout-label">Tipo de Comprobante:</label>
+                    <select id="chk_tipo_doc" onchange="actualizarTipoComprobante(this.value)" 
+                            style="width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; font-weight: bold; margin-bottom: 15px; cursor: pointer; outline: none;">
+                        <option value="NOTA DE VENTA">NOTA DE VENTA (Descuenta Stock)</option>
+                        <option value="BOLETA">BOLETA (Descuenta Stock)</option>
+                        <option value="FACTURA">FACTURA (Descuenta Stock)</option>
+                        <option value="TICKET">TICKET (Descuenta Stock)</option>
+                        <option value="PROFORMA">PROFORMA (Informativo)</option>
+                        <option value="COTIZACION">COTIZACIÓN (Informativo)</option>
+                    </select>
+
+                    <label class="checkout-label">Método de Pago:</label>                    <div class="btn-group" id="group_metodo">
+                        <button class="toggle-btn active" onclick="setMetodo('EFECTIVO')">EFECTIVO</button>
+                        <button class="toggle-btn" onclick="setMetodo('TRANSFERENCIA')">TRANSF.</button>
+                        <button class="toggle-btn" onclick="setMetodo('YAPE/PLIN')">YAPE</button>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Pago y Vuelto -->
+                <div style="background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #3b82f6; display: flex; flex-direction: column; justify-content: center;">
+                    <label class="checkout-label" style="color: #22c55e;">Monto Recibido S/:</label>
+                    <input type="number" id="chk_recibido" step="0.10" oninput="calcularVuelto()" 
+                           style="width: 100%; font-size: 28px; background: transparent; border: none; border-bottom: 2px solid #22c55e; color: white; font-weight: bold; text-align: center; margin-bottom: 15px; outline: none;">
+                    
+                    <div style="text-align: center; background: #1e293b; padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px;">SU VUELTO ES</span>
+                        <div style="font-size: 24px; color: #3b82f6; font-weight: 800;">S/ <span id="chk_vuelto">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Cliente -->
+            <div style="background: #1e293b; padding: 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px;">
+                    <div style="flex: 0.8;">
+                        <label class="checkout-label">DNI / RUC del Cliente:</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="chk_documento" placeholder="Buscar documento..." 
+                                   style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px;">
+                            <button class="btn-checkout-search" onclick="buscarClienteCheckout()" style="border-radius: 6px; padding: 0 15px;"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div style="flex: 1.2;">
+                        <label class="checkout-label">Nombre o Razón Social:</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="chk_nombre" placeholder="Nombre completo" 
+                                   style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px;">
+                            <button class="btn-confirm" onclick="toggleNuevoClienteRapido()" title="Nuevo Cliente" 
+                                    style="background: #22c55e; width: 42px; border-radius: 6px; height: 42px;"><i class="fas fa-user-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario Rápido (Estilo Tarjeta) -->
+                <div id="nuevo_cliente_rapido" style="display: none; background: #101b2d; padding: 15px; border-radius: 8px; border: 1px solid #22c55e; margin-top: 15px; animation: slideDown 0.3s ease-out;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0; color: #22c55e; font-size: 14px;"><i class="fas fa-id-card"></i> REGISTRO RÁPIDO</h4>
+                        <span style="font-size: 11px; color: #94a3b8;">* Campos recomendados</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="text" id="nc_nombre" placeholder="Nombre completo" style="grid-column: span 2; background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 4px;">
+                        <input type="text" id="nc_telefono" placeholder="Teléfono" style="background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 4px;">
+                        <input type="text" id="nc_direccion" placeholder="Dirección" style="background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 4px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                        <button class="btn-confirm" onclick="guardarClienteRapido()" style="flex: 1; padding: 10px; border-radius: 6px; background: #22c55e; font-size: 13px;">GUARDAR Y USAR</button>
+                        <button class="btn btn-secondary" onclick="toggleNuevoClienteRapido()" style="padding: 10px; border-radius: 6px; font-size: 13px;">CANCELAR</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ajuste de Productos (Scrollable) -->
+            <div style="background: #0f172a; border-radius: 12px; padding: 15px; border: 1px solid #334155; max-height: 250px; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label class="checkout-label" style="margin: 0;">Detalle de la Venta:</label>
+                    <button class="btn-checkout-search" onclick="document.getElementById('modal_pos_search').focus()" 
+                            style="background: transparent; border: 1px solid #3b82f6; color: #3b82f6; font-size: 11px; padding: 4px 10px; border-radius: 4px;">+ AGREGAR MÁS</button>
+                </div>
+                
+                <input type="text" id="modal_pos_search" placeholder="Buscar más productos..." 
+                       style="width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; margin-bottom: 10px; font-size: 13px;" oninput="buscarProductosModal(this.value)">
+                <div id="modal_search_results" style="position: absolute; width: calc(100% - 70px); background: #1e293b; border: 1px solid #3b82f6; z-index: 1000; max-height: 150px; overflow-y: auto; display: none;"></div>
+
+                <div id="modal_cart_list" style="overflow-y: auto; flex: 1;">
+                    <!-- Productos -->
+                </div>
+            </div>
+
+            <!-- Botones de Acción Final -->
+            <div class="final-actions" style="margin-top: 25px; gap: 15px;">
+                <button class="btn-cancel" onclick="closeCheckoutModal()" style="border-radius: 10px; padding: 15px; background: #334155; font-size: 14px;">CANCELAR / VOLVER</button>
+                <button class="btn-confirm" onclick="procesarVentaFinal()" style="border-radius: 10px; padding: 15px; font-size: 18px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">ACEPTAR Y EMITIR</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .toggle-btn {
+            border-radius: 6px;
+            font-size: 11px;
+            padding: 10px 5px !important;
+        }
+    </style>
+
+    <!-- MODAL OPCIONES POST-VENTA -->
+    <div id="success_modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px; background: #1e293b; color: white; border-radius: 12px;">
+            <div style="color: #22c55e; font-size: 50px; margin-bottom: 15px;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 style="margin-bottom: 10px;">¡Venta Exitosa!</h2>
+            <p style="color: #94a3b8; margin-bottom: 25px;">¿Qué desea hacer con el comprobante?</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-primary" onclick="descargarPDF(last_sale_id, '80mm')" style="background: #ef4444; padding: 12px; font-size: 13px;">
+                    <i class="fas fa-file-pdf"></i> PDF TICKET
+                </button>
+                <button class="btn btn-primary" onclick="descargarPDF(last_sale_id, 'A4')" style="background: #dc2626; padding: 12px; font-size: 13px;">
+                    <i class="fas fa-file-pdf"></i> PDF A4
+                </button>
+            </div>
+            <button class="btn btn-primary" onclick="abrirWhatsAppSolo()" style="background: #25d366; width: 100%; padding: 12px;">
+                <i class="fab fa-whatsapp"></i> ABRIR WHATSAPP CLIENTE
+            </button>
+                <hr style="border: 0; border-top: 1px solid #334155; margin: 10px 0;">
+                <button class="btn btn-primary" onclick="imprimirTicket(last_sale_id, '80mm')" style="background: #3b82f6; width: 100%; padding: 12px;">
+                    <i class="fas fa-receipt"></i> IMPRIMIR TICKET (80mm)
+                </button>
+                <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
+                <button class="btn-cancel" onclick="closeSuccessModal()" style="width: 100%; padding: 10px; border-radius: 6px;">
+                    NUEVA VENTA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECCIÓN DE PRESENTACIÓN (Unidad, Docena, etc) -->
+    <div id="pos_unit_modal" class="modal">
+        <div class="modal-content" style="max-width: 450px; background: #1e293b; color: white; border-radius: 12px; border: 1px solid #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size: 18px;">Seleccionar Presentación</h2>
+                <button onclick="document.getElementById('pos_unit_modal').style.display='none'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 14px;">Elija cómo desea vender este producto:</p>
+            <div id="unit_options_list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Las opciones se cargan dinámicamente -->
+            </div>
+            <div style="margin-top: 25px; text-align: right;">
+                <button onclick="document.getElementById('pos_unit_modal').style.display='none'" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; font-size: 13px;">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="common.js?v=2"></script>
+    <script src="pos_script.js?v=2"></script>
+    <script>checkAccess();</script>
+</body>
+</html>

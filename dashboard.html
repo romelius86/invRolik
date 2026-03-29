@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | ROLIK</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="#" id="nav_dashboard" class="active"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="main-content">
+            <header>
+                <h2>Panel de Control</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container">
+                <div id="session_banner" class="alert alert-success" style="display:none;">
+                    <i class="fas fa-check-circle"></i> Sesión de caja activa. ¡Listo para vender!
+                </div>
+
+                <div class="page-title">
+                    <h1>Resumen General</h1>
+                    <p id="today_date" style="color: var(--text-muted); margin: 0;"></p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="kpi-card" id="kpi_sales_box">
+                        <h3>Ventas de Hoy</h3>
+                        <p id="kpi_ventas">S/ 0.00</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Total Productos</h3>
+                        <p id="kpi_productos">0</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Clientes Registrados</h3>
+                        <p id="kpi_clientes">0</p>
+                    </div>
+                    <div class="kpi-card" style="border-left: 4px solid var(--danger);">
+                        <h3>Alertas de Stock</h3>
+                        <p id="kpi_stock" style="color:var(--danger);">0</p>
+                    </div>
+                </div>
+
+                <div class="summary-section" style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+                    <div class="table-card">
+                        <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> Productos con Stock Crítico</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>SKU</th>
+                                        <th>Stock</th>
+                                        <th>Mínimo</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="low_stock_table">
+                                    <tr><td colspan="5" style="text-align:center;">Cargando alertas...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <h3 style="margin-top:0; margin-bottom:20px;">Accesos Rápidos</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <a href="pos.html" id="quick_pos" class="btn btn-primary" style="justify-content: center; text-decoration:none; padding: 15px;">
+                                <i class="fas fa-plus"></i> NUEVA VENTA
+                            </a>
+                            <a href="index.html" id="quick_inv" class="btn btn-secondary" style="justify-content: center; text-decoration:none; padding: 15px;">
+                                <i class="fas fa-eye"></i> VER ALMACÉN
+                            </a>
+                            <a href="reportes.html" id="quick_rep" class="btn btn-secondary" style="justify-content: center; text-decoration:none; padding: 15px;">
+                                <i class="fas fa-chart-bar"></i> ESTADÍSTICAS
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        checkAccess();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('today_date').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            try {
+                const response = await fetch(`${API_URL}/reportes/dashboard`);
+                if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+                const data = await response.json();
+                
+                // Actualizar contadores
+                document.getElementById('kpi_ventas').textContent = formatCurrency(data.sales_today || 0);
+                document.getElementById('kpi_productos').textContent = data.total_products || 0;
+                document.getElementById('kpi_clientes').textContent = data.total_clients || 0;
+                document.getElementById('kpi_stock').textContent = data.alerta_stock || 0;
+
+                // Renderizar tabla de stock bajo
+                const tableBody = document.getElementById('low_stock_table');
+                tableBody.innerHTML = "";
+                
+                // Obtener detalles de stock bajo
+                const resStock = await fetch(`${API_URL}/reportes/stock-bajo`);
+                const products = await resStock.json();
+
+                if (products.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--success); padding: 20px;">Todo el stock está al día. <i class="fas fa-check-circle"></i></td></tr>';
+                } else {
+                    products.slice(0, 8).forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${p.nombre}</strong></td>
+                            <td><span class="badge badge-blue">${p.codigo}</span></td>
+                            <td><span class="badge badge-red">${p.stock}</span></td>
+                            <td>${p.stock_minimo}</td>
+                            <td><a href="compras.html?sku=${p.codigo}" class="btn btn-primary" style="padding: 5px 10px; font-size: 11px;">COMPRAR</a></td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+
+                const sessRes = await fetch(`${API_URL}/caja/sesion-activa`);
+                const sessData = await sessRes.json();
+                if (sessData.active) document.getElementById('session_banner').style.display = 'block';
+            } catch (error) { console.error(error); }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios | ROLIK</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="#" id="nav_users" class="active"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2>Administración de Usuarios</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container">
+                <div class="page-title">
+                    <h1>Gestión de Accesos</h1>
+                    <button class="btn btn-primary" id="btn_new_user" onclick="openUserModal()"><i class="fas fa-user-plus"></i> NUEVO USUARIO</button>
+                </div>
+
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users_body">
+                            <tr><td colspan="4" class="loading">Cargando usuarios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Formulario de Usuario -->
+    <div id="user_modal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h2 id="user_modal_title" style="margin-top:0; margin-bottom:25px;">Nuevo Usuario</h2>
+            <form id="user_form">
+                <input type="hidden" id="u_id">
+                <div class="form-group">
+                    <label>Nombre de Usuario *</label>
+                    <input type="text" id="u_username" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña (dejar en blanco para no cambiar)</label>
+                    <input type="password" id="u_password">
+                </div>
+                <div class="form-group">
+                    <label>Rol de Usuario</label>
+                    <select id="u_role">
+                        <option value="seller">Vendedor</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="u_active">
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+                <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;">GUARDAR CAMBIOS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Permisos -->
+    <div id="permissions_modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="perm_modal_title" style="margin-top:0; margin-bottom:20px;">Permisos de Usuario</h2>
+            <input type="hidden" id="perm_user_id">
+            <div id="permissions_list" style="max-height: 400px; overflow-y: auto; display: grid; grid-template-columns: 1fr; gap: 10px; padding: 15px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border-color);">
+                <!-- Los permisos se cargarán aquí -->
+            </div>
+            <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closePermissionsModal()">CANCELAR</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserPermissions()" style="margin-left: 10px;">GUARDAR PERMISOS</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script src="usuarios_script.js"></script>
+    <script>checkAccess();</script>
+</body>
+</html>

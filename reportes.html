@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes | ROLIK</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .report-menu {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .report-btn {
+            padding: 25px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .report-btn:hover { transform: translateY(-3px); opacity: 0.9; }
+        .btn-blue { background: #3b82f6; }
+        .btn-orange { background: #f59e0b; }
+        .btn-green { background: #10b981; }
+        .btn-red { background: #ef4444; }
+
+        .report-view { display: none; }
+        .active-view { display: block; }
+
+        .back-btn { margin-bottom: 20px; }
+        
+        .filters-inline {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Selección de fila */
+        .selected-row {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+
+        .action-bar-bottom {
+            display: none;
+            margin-top: 20px;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* Estilos para el modal de recibo */
+        .receipt-edit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .receipt-items-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="#" id="nav_reports" class="active"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2 id="view_title">Reportes del Sistema</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container"><div id="toast-container"></div>
+                <!-- MENÚ DE REPORTES (Vista Principal) -->
+                <div id="view_menu" class="report-view active-view">
+                    <div class="report-menu">
+                        <button class="report-btn btn-blue" onclick="showReport('ventas_hoy')"><i class="fas fa-calendar-day"></i> Ventas de Hoy</button>
+                        <button class="report-btn btn-blue" onclick="showReport('ventas_rango')"><i class="fas fa-calendar-alt"></i> Ventas por Rango / Ganancias</button>
+                        <button class="report-btn btn-blue" onclick="showReport('ventas_producto')"><i class="fas fa-box-open"></i> Ventas por Producto</button>
+                        <button class="report-btn btn-blue" onclick="showReport('ventas_categoria')"><i class="fas fa-tags"></i> Ventas por Categoría</button>
+                        <button class="report-btn btn-blue" onclick="showReport('top_productos')"><i class="fas fa-trophy"></i> Top 10 Más Vendidos</button>
+                        <button class="report-btn btn-green" onclick="showReport('ventas_cliente')"><i class="fas fa-user-tag"></i> Compras por Cliente</button>
+                        <button class="report-btn btn-orange" onclick="showReport('bajo_stock')"><i class="fas fa-exclamation-triangle"></i> Bajo Stock / Reabastecer</button>
+                        <button class="report-btn btn-orange" onclick="showReport('kardex')"><i class="fas fa-history"></i> Kardex (Movimientos)</button>
+                        <button class="report-btn btn-green" onclick="showReport('historial_recibos')"><i class="fas fa-receipt"></i> Historial de Recibos</button>
+                        <button class="report-btn btn-green" onclick="showReport('ventas_vendedor')"><i class="fas fa-user-friends"></i> Ventas por Vendedor</button>
+                    </div>
+                </div>
+
+                <!-- VISTA DE REPORTE DETALLADO -->
+                <div id="view_report_detail" class="report-view">
+                    <button class="btn btn-secondary back-btn" onclick="showMenu()"><i class="fas fa-arrow-left"></i> Volver al Menú</button>
+                    
+                    <div id="report_content">
+                        <div id="report_filters" class="filters-inline" style="display:none;">
+                            <div class="form-group">
+                                <label>Desde:</label>
+                                <input type="date" id="rep_start">
+                            </div>
+                            <div class="form-group">
+                                <label>Hasta:</label>
+                                <input type="date" id="rep_end">
+                            </div>
+                            <div class="form-group" id="grp_metodo_pago">
+                                <label>Método Pago:</label>
+                                <select id="rep_metodo">
+                                    <option value="TODOS">TODOS</option>
+                                    <option value="EFECTIVO">EFECTIVO</option>
+                                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                                    <option value="YAPE/PLIN">YAPE/PLIN</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="grp_agrupar_por" style="display:none;">
+                                <label>Agrupar por:</label>
+                                <select id="rep_group_by">
+                                    <option value="producto">Producto / SKU</option>
+                                    <option value="categoria">Categoría</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="grp_ordenar_por" style="display:none;">
+                                <label>Ordenar por:</label>
+                                <select id="rep_order_by">
+                                    <option value="cantidad">Cantidad (Mayor a Menor)</option>
+                                    <option value="monto">Monto Total (Mayor a Menor)</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="btn_apply_filter" style="height:45px;"><i class="fas fa-sync"></i> Generar Reporte</button>
+                        </div>
+
+                        <!-- BUSCADOR DE COINCIDENCIAS EN REPORTE -->
+                        <div id="report_search_container" style="display:none; margin-bottom: 15px; position: relative;">
+                            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                            <input type="text" id="report_search_input" list="report_search_suggestions" placeholder="Filtrar por nombre de producto o SKU..." style="width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); color: white; padding: 12px 12px 12px 40px; border-radius: 8px; outline: none;" oninput="filterReportTable()">
+                            <datalist id="report_search_suggestions"></datalist>
+                        </div>
+
+                        <div id="report_stats" class="dashboard-grid" style="display:none;"></div>
+
+                        <div class="table-card">
+                            <table id="report_table">
+                                <thead id="report_thead"></thead>
+                                <tbody id="report_tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Botones de acción al estilo escritorio -->
+                        <div id="historial_actions" class="action-bar-bottom">
+                            <button class="btn btn-primary" onclick="viewSelectedReceipt()" style="background:#3b82f6; min-width: 200px;">Ver Recibo (V)</button>
+                            <button class="btn btn-primary" onclick="editSelectedReceipt()" style="background:#f59e0b; min-width: 200px;">Editar Recibo (E)</button>
+                            <button class="btn btn-primary" onclick="voidSelectedSale()" style="background:#ef4444; min-width: 200px;">Anular Recibo (A)</button>
+                            <button class="btn btn-secondary" onclick="showMenu()" style="background:#64748b; min-width: 200px;">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Ver/Editar Recibo -->
+    <div id="receipt_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h2 id="receipt_modal_title">Detalle de Recibo</h2>
+            <form id="receipt_edit_form">
+                <input type="hidden" id="edit_sale_id">
+                <div class="receipt-edit-grid">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="edit_cliente_nombre">
+                    </div>
+                    <div class="form-group">
+                        <label>Documento</label>
+                        <input type="text" id="edit_cliente_doc">
+                    </div>
+                    <div class="form-group">
+                        <label>Comprobante</label>
+                        <select id="edit_tipo_comp">
+                            <option value="TICKET">TICKET</option>
+                            <option value="BOLETA">BOLETA</option>
+                            <option value="FACTURA">FACTURA</option>
+                            <option value="NOTA DE VENTA">NOTA DE VENTA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Método de Pago</label>
+                        <select id="edit_metodo">
+                            <option value="EFECTIVO">EFECTIVO</option>
+                            <option value="TARJETA">TARJETA</option>
+                            <option value="YAPE/PLIN">YAPE/PLIN</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="receipt-items-list">
+                    <table>
+                        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                        <tbody id="receipt_items_body"></tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: right; margin-top: 15px; font-size: 20px;">
+                    Total: <strong style="color: var(--success);">S/ <span id="receipt_total">0.00</span></strong>
+                </div>
+
+                <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeReceiptModal()">CERRAR</button>
+                    <button type="button" class="btn btn-secondary" id="btn_print_receipt" onclick="printFromModal()" style="background:#10b981;"><i class="fas fa-print"></i> IMPRIMIR</button>
+                    <button type="submit" class="btn btn-primary" id="btn_save_receipt" style="display:none; margin-left: 10px;">GUARDAR CAMBIOS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Modal Detalle Cliente Productos -->
+    <div id="customer_products_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 id="cp_modal_title">Productos Comprados por Cliente</h2>
+                <button onclick="closeCustomerProductsModal()" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th style="text-align: center;">Cant. Total</th>
+                            <th style="text-align: right;">Monto Total</th>
+                            <th>Última Compra</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cp_tbody">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ranking Clientes por Producto -->
+    <div id="product_customers_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 id="pc_modal_title">Clientes que compraron este producto</h2>
+                <button onclick="closeProductCustomersModal()" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th style="text-align: center;">Cant. Comprada</th>
+                            <th style="text-align: right;">Monto Total</th>
+                            <th>Última Compra</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pc_tbody">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Clientes de Hoy -->
+    <div id="today_clients_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>Clientes Atendidos Hoy</h2>
+                <button onclick="closeModal('today_clients_modal')" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th style="text-align: center;">Transacciones</th>
+                            <th style="text-align: right;">Total Comprado</th>
+                            <th>Última Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tc_tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Productos de Hoy -->
+    <div id="today_products_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>Productos Vendidos Hoy</h2>
+                <button onclick="closeModal('today_products_modal')" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th style="text-align: center;">Cantidad</th>
+                            <th style="text-align: right;">Monto Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tp_tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Productos por Categoría -->
+    <div id="category_products_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 id="catp_modal_title">Productos en Categoría</h2>
+                <button onclick="closeModal('category_products_modal')" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th style="text-align: center;">Cantidad</th>
+                            <th style="text-align: right;">Total S/</th>
+                        </tr>
+                    </thead>
+                    <tbody id="catp_tbody">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script src="reportes_script.js"></script>
+    <script>checkAccess();</script>
+</body>
+</html>
+

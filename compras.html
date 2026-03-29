@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compras | ROLIK</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-pendiente { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-recibida { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .status-anulado { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .status-cancelada { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        
+        .po-items-table {
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .add-item-bar {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="#" id="nav_purchases" class="active"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2>Órdenes de Compra y Abastecimiento</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container"><div id="toast-container"></div>
+                <div class="page-title">
+                    <h1>Historial de Órdenes</h1>
+                    <button class="btn btn-primary" id="btn_new_order" onclick="openOrderModal()"><i class="fas fa-file-invoice"></i> NUEVA ORDEN</button>
+                </div>
+
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Orden</th>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders_body">
+                            <tr><td colspan="6" class="loading">Cargando órdenes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Orden de Compra -->
+    <div id="order_modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <h2 id="order_modal_title" style="margin-top:0;">Generar Orden de Compra</h2>
+            <form id="order_form">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Proveedor *</label>
+                        <select id="o_proveedor" required onchange="updateRUC()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>RUC Proveedor</label>
+                        <input type="text" id="o_ruc" readonly placeholder="RUC automático">
+                    </div>
+                    <div class="form-group">
+                        <label>N° Guía / Factura Proveedor</label>
+                        <input type="text" id="o_comprobante_proveedor" placeholder="Opcional: F001-123">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Compra *</label>
+                        <input type="date" id="o_fecha_compra" required>
+                    </div>
+                </div>
+
+                <div class="add-item-bar" style="position: relative; background: #1e293b; border: 1px solid #334155; display: grid; grid-template-columns: 2fr auto 1fr 1.5fr auto; gap: 10px; align-items: center; padding: 15px;">
+                    <div style="position: relative;">
+                        <input type="text" id="item_search" placeholder="Buscar producto por nombre o código..." autocomplete="off" oninput="searchProductsForPO(this.value)" 
+                            style="width: 100%; background: #0f172a; border: 1px solid #3b82f6; color: white; padding: 12px; border-radius: 6px; outline: none;">
+                        <div id="po_search_results" style="position: absolute; top: 100%; left: 0; width: 100%; background: #1e293b; border: 1px solid #334155; z-index: 1000; border-radius: 0 0 8px 8px; display: none; box-shadow: 0 10px 15px rgba(0,0,0,0.5); max-height: 250px; overflow-y: auto;"></div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="openQuickProductModal()" title="Crear Producto Nuevo" style="padding: 12px; background: #334155; border-radius: 6px;"><i class="fas fa-plus-circle"></i> NUEVO</button>
+                    <div style="display: flex; align-items: center; gap: 5px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding-right: 10px;">
+                        <input type="number" id="item_qty" placeholder="Cant." 
+                            style="flex: 1; background: transparent; border: none; color: white; padding: 12px; outline: none; text-align: center;">
+                        <span id="item_unit_display" style="color: #94a3b8; font-size: 11px; font-weight: bold; white-space: nowrap;">und</span>
+                    </div>
+                    <input type="number" id="item_price" placeholder="P. Compra (S/)" step="0.01" 
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px; outline: none; text-align: center;">
+                    <button type="button" class="btn btn-primary" onclick="addItemToOrder()" style="padding: 12px 20px; font-weight: bold;"><i class="fas fa-plus"></i> AÑADIR</button>
+                </div>
+
+                <div class="po-items-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Unidad</th>
+                                <th style="text-align: center;">Cant.</th>
+                                <th style="text-align: right;">P. Unit.</th>
+                                <th style="text-align: right;">Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="po_items_body"></tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: right; margin-top: 25px; font-size: 22px;">
+                    Total (inc. IGV): <strong style="color: var(--success);">S/ <span id="po_total">0.00</span></strong>
+                </div>
+
+                <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeOrderModal()">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;">GENERAR ORDEN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalle de Orden -->
+    <div id="detail_modal" class="modal">
+        <div class="modal-content">
+            <h2 id="det_title" style="margin-top:0;">Detalle de Orden</h2>
+            <div id="det_info" style="margin-bottom: 25px; background: #0f172a; padding: 20px; border-radius: 12px;"></div>
+            <div class="table-card">
+                <table>
+                    <thead><tr><th>Producto</th><th>Descripción</th><th>Cant.</th><th>P. Compra</th><th>Subtotal</th></tr></thead>
+                    <tbody id="det_items_body"></tbody>
+                </table>
+            </div>
+            <div class="form-actions" id="det_actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeDetailModal()">CERRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script src="compras_script.js"></script>
+    <script>checkAccess();</script>
+
+    <!-- Modal Rápido de Nuevo Producto (Acceso desde Compras) -->
+    <div id="quick_product_modal" class="modal" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 style="margin-top:0;">Nuevo Producto (Acceso Rápido)</h2>
+            <form id="quick_product_form">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Código (SKU) *</label>
+                        <input type="text" id="qp_codigo" required style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="qp_nombre" required style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <input type="text" id="qp_categoria" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad</label>
+                        <input type="text" id="qp_unidad" value="UND" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Venta Sugerido</label>
+                        <input type="number" id="qp_precio_venta" step="0.01" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Fabricante</label>
+                        <input type="text" id="qp_fabricante" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Descripción</label>
+                        <textarea id="qp_descripcion" rows="2" style="background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 5px; width: 100%;"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 20px; text-align: right; border-top: 1px solid #334155; padding-top: 15px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeQuickProductModal()">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;">GUARDAR E INSERTAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+

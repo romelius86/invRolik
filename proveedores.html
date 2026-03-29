@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores | ROLIK</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="#" id="nav_suppliers" class="active"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2>Gestión de Proveedores</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">Usuario</span>
+                        <span class="user-role" id="user_role_display">Rol</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container"><div id="toast-container"></div>
+                <div class="page-title">
+                    <h1>Mis Proveedores</h1>
+                    <div class="actions" style="display: flex; gap: 10px;">
+                        <input type="text" id="supplier_search" placeholder="Buscar por Nombre, RUC o Email..." oninput="filterSuppliers()" style="width: 300px; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px;">
+                        <button class="btn btn-secondary" onclick="openTrashModal()"><i class="fas fa-trash-restore"></i> PAPELERA</button>
+                        <button class="btn btn-primary" id="btn_new_supplier" onclick="openSupplierModal()"><i class="fas fa-plus"></i> NUEVO PROVEEDOR</button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre / Razón Social</th>
+                                <th>RUC / DNI</th>
+                                <th>Teléfono</th>
+                                <th>Email</th>
+                                <th>Dirección</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliers_body">
+                            <tr><td colspan="6" class="loading">Cargando proveedores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Formulario de Proveedor -->
+    <div id="supplier_modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal_title" style="margin-top:0; margin-bottom:25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">Nuevo Proveedor</h2>
+            <form id="supplier_form">
+                <input type="hidden" id="s_id">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><i class="fas fa-building"></i> Nombre / Razón Social *</label>
+                        <input type="text" id="s_nombre" placeholder="Ej: Aceros S.A.C." required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> Tipo Documento</label>
+                        <select id="s_tipo_doc">
+                            <option value="DNI">DNI (8 dígitos)</option>
+                            <option value="RUC">RUC (11 dígitos)</option>
+                            <option value="OTROS">OTROS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> N° Documento</label>
+                        <input type="text" id="s_ruc_dni" placeholder="Ingrese número">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="text" id="s_telefono" placeholder="Ej: 987654321">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="s_email" placeholder="ejemplo@correo.com">
+                    </div>
+                    <div class="form-group" style="grid-column: span 1;">
+                        <label><i class="fas fa-map-marker-alt"></i> Ciudad / Distrito</label>
+                        <input type="text" id="s_distrito" placeholder="Ej: Lima">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><i class="fas fa-directions"></i> Dirección Exacta</label>
+                        <textarea id="s_direccion" rows="2" placeholder="Calle, Número, Oficina..."></textarea>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">
+                        <i class="fas fa-times"></i> CANCELAR
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> GUARDAR PROVEEDOR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script src="proveedores_script.js"></script>
+    <script>checkAccess();</script>
+</body>
+</html>
+
