@@ -690,7 +690,7 @@ def obtener_ticket_html(id: int, format: str = "80mm"):
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 # --- SERVIR FRONTEND ---
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "pagina_web"))
+frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pagina_web"))
 print(f"DEBUG: Sirviendo archivos estáticos desde: {frontend_path}")
 
 if os.path.exists(frontend_path):
