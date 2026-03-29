@@ -699,3 +699,7 @@ def login(req: LoginRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     return {"success": True, "user": user}
+
+@app.get("/")
+def inicio():
+    return {"mensaje": "Servidor de ROLIK ERP activo y funcionando"}
