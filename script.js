@@ -1,17 +1,8 @@
-// 1. Configuración de la URL del servidor
-const API_URL = 'https://invrolik-6.onrender.com'; 
+const API_URL = typeof API_URL !== 'undefined' ? API_URL : 'https://invrolik-6.onrender.com';
 
-// Variables globales
+// script.js - Lógica para Inventario ROLIK con Integración de Proveedores
+
 let allInventory = [];
-
-// Función para evitar múltiples llamadas seguidas (debounce)
-const debounce = (func, delay) => {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-};
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchProducts();
@@ -107,10 +98,7 @@ function renderInventory(products) {
         }
     ];
 
-    // Nota: Asegúrate de tener la función renderTable definida en otro lugar o agregarla aquí.
-    if (typeof renderTable === 'function') {
-        renderTable(products, columns, 'inventory_body');
-    }
+    renderTable(products, columns, 'inventory_body');
 }
 
 function filterInventory() {
@@ -129,11 +117,12 @@ let currentProductUnitsCode = null;
 async function openUnitsModal(codigo, nombre) {
     currentProductUnitsCode = codigo;
     const modal = document.getElementById('units_modal');
-    if (!modal) return;
+    if (!modal) return notify.error("Modal de unidades no encontrado");
     
     document.getElementById('units_modal_title').innerText = `Presentaciones: ${nombre}`;
     document.getElementById('unit_form').reset();
     
+    // Escuchador para autocompletar factor según nombre
     const nameInput = document.getElementById('u_nombre');
     const factorInput = document.getElementById('u_factor');
     if (nameInput) {
@@ -174,7 +163,7 @@ async function saveNewUnit() {
         precio_venta: parseFloat(document.getElementById('u_precio').value)
     };
 
-    if (!data.nombre_unidad || !data.factor_conversion) return;
+    if (!data.nombre_unidad || !data.factor_conversion) return notify.warn("Nombre y Factor son obligatorios");
 
     try {
         const res = await fetch(`${API_URL}/productos/${currentProductUnitsCode}/unidades`, {
@@ -185,8 +174,12 @@ async function saveNewUnit() {
         if (res.ok) {
             document.getElementById('unit_form').reset();
             loadProductUnits();
+            notify.success("Presentación añadida");
+        } else {
+            const err = await res.json();
+            notify.error("Error: " + (err.detail || "No se pudo guardar"));
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { notify.error("Error de conexión"); }
 }
 
 async function deleteUnit(id) {
@@ -194,10 +187,13 @@ async function deleteUnit(id) {
     try {
         await fetch(`${API_URL}/productos/unidades/${id}`, { method: 'DELETE' });
         loadProductUnits();
-    } catch (e) { console.error(e); }
+        notify.success("Presentación eliminada");
+    } catch (e) { notify.error("Error al eliminar"); }
 }
 
 function closeUnitsModal() { document.getElementById('units_modal').style.display = 'none'; }
+
+// --- RESTO DE FUNCIONES (Producto, Kardex, Proveedores) ---
 
 async function fetchSuppliersForSelect() {
     try {
@@ -251,15 +247,15 @@ async function loadProductToForm(codigo) {
         document.getElementById('p_precio').value = p.precio_venta;
         document.getElementById('p_descripcion').value = p.descripcion || "";
         document.getElementById('p_codigo').readOnly = true;
-    } catch (error) { console.error(error); }
+    } catch (error) { notify.error("Error al cargar producto"); }
 }
 
 async function deleteProduct(codigo) {
     if (!confirm(`¿Mover el producto ${codigo} a la papelera?`)) return;
     try {
         const response = await fetch(`${API_URL}/productos/${codigo}`, { method: 'DELETE' });
-        if (response.ok) { fetchProducts(); }
-    } catch (error) { console.error(error); }
+        if (response.ok) { fetchProducts(); notify.success("Producto movido a papelera"); }
+    } catch (error) { notify.error("Error de conexión"); }
 }
 
 async function openKardexModal(codigo, nombre) {
@@ -279,7 +275,7 @@ async function openKardexModal(codigo, nombre) {
             </tr>
         `).join('') || '<tr><td colspan="6" style="text-align:center">Sin movimientos</td></tr>';
         modal.style.display = 'block';
-    } catch (e) { console.error(e); }
+    } catch (e) { notify.error("Error al cargar Kardex"); }
 }
 
 function closeKardexModal() {
@@ -287,6 +283,7 @@ function closeKardexModal() {
     if (modal) modal.style.display = 'none';
 }
 
+// Listener para el formulario de productos
 const pForm = document.getElementById('product_form');
 if (pForm) {
     pForm.addEventListener('submit', async (e) => {
@@ -311,30 +308,25 @@ if (pForm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (res.ok) { 
-                document.getElementById('product_modal').style.display = 'none'; 
-                fetchProducts(); 
-            }
-        } catch (e) { console.error(e); }
+            if (res.ok) { document.getElementById('product_modal').style.display = 'none'; fetchProducts(); notify.success("Guardado"); }
+        } catch (e) { notify.error("Error al guardar"); }
     });
 }
 
+// --- PAPELERA Y EXPORTACIÓN ---
+
 function openTrashModal() {
     const modal = document.getElementById('trash_modal');
-    if (modal) {
-        modal.style.display = "block";
-        fetchDeletedProducts();
-    }
+    modal.style.display = "block";
+    fetchDeletedProducts();
 }
 
 function closeTrashModal() {
-    const modal = document.getElementById('trash_modal');
-    if (modal) modal.style.display = "none";
+    document.getElementById('trash_modal').style.display = "none";
 }
 
 async function fetchDeletedProducts() {
     const tbody = document.getElementById('trash_body');
-    if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" class="loading">Cargando...</td></tr>';
     try {
         const res = await fetch(`${API_URL}/productos-eliminados`);
@@ -349,19 +341,22 @@ async function fetchDeletedProducts() {
                 </td>
             </tr>
         `).join('') || '<tr><td colspan="4" style="text-align:center">La papelera está vacía.</td></tr>';
-    } catch (e) { console.error(e); }
+    } catch (e) { notify.error("Error al cargar la papelera"); }
 }
 
 async function restoreProduct(codigo) {
     try {
         const res = await fetch(`${API_URL}/productos/restaurar/${codigo}`, { method: 'POST' });
         if (res.ok) {
+            notify.success("Producto restaurado");
             fetchDeletedProducts();
             fetchProducts();
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { notify.error("Error al restaurar"); }
 }
 
 function exportToExcel() {
+    notify.info("Generando archivo de exportación...");
     window.location.href = `${API_URL}/productos/exportar`;
 }
+
