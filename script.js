@@ -1,5 +1,3 @@
-const API_URL = typeof API_URL !== 'undefined' ? API_URL : 'https://invrolik-6.onrender.com';
-
 // script.js - Lógica para Inventario ROLIK con Integración de Proveedores
 
 let allInventory = [];
