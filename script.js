@@ -1,3 +1,12 @@
+// 1. ESTA LÍNEA ES LA MÁS IMPORTANTE (Agrégala al puro inicio)
+const API_URL = 'https://invrolik-2.onrender.com'; 
+
+// --- ABAJO PEGAS TODO TU CÓDIGO ---
+let allInventory = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchProducts();
+    // ... resto del código que me pasaste
 // script.js - Lógica para Inventario ROLIK con Integración de Proveedores
 
 let allInventory = [];
