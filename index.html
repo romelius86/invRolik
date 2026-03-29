@@ -259,8 +259,271 @@
         </div>
     </div>
 
+    <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | ROLIK</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ROLIK <span>ERP</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" id="nav_dashboard"><i class="fas fa-chart-line"></i> DASHBOARD</a>
+                <a href="pos.html" id="nav_pos"><i class="fas fa-shopping-cart"></i> POS (VENTAS)</a>
+                <a href="index.html" id="nav_inventory" class="active"><i class="fas fa-boxes"></i> INVENTARIO</a>
+                <a href="clientes.html" id="nav_clients"><i class="fas fa-users"></i> CLIENTES</a>
+                <a href="compras.html" id="nav_purchases"><i class="fas fa-truck"></i> COMPRAS</a>
+                <a href="proveedores.html" id="nav_suppliers"><i class="fas fa-handshake"></i> PROVEEDORES</a>
+                <a href="caja.html" id="nav_cash"><i class="fas fa-cash-register"></i> CAJA</a>
+                <a href="reportes.html" id="nav_reports"><i class="fas fa-file-invoice-dollar"></i> REPORTES</a>
+                <a href="usuarios.html" id="nav_users"><i class="fas fa-user-shield"></i> USUARIOS</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header>
+                <h2>Panel de Inventario</h2>
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name" id="user_name_display">admin</span>
+                        <span class="user-role" id="user_role_display">ADMIN</span>
+                    </div>
+                    <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> SALIR</button>
+                </div>
+            </header>
+
+            <main class="container">
+                <div id="toast-container"></div>
+                <div class="page-title">
+                    <h1>Mis Productos</h1>
+                    <div class="actions" style="display:flex; gap:10px;">
+                        <button class="btn btn-secondary" onclick="openTrashModal()"><i class="fas fa-trash-restore"></i> PAPELERA</button>
+                        <button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXPORTAR</button>
+                        <button class="btn btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> NUEVO PRODUCTO</button>
+                    </div>
+                </div>
+
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="inventory_search" placeholder="Buscar por Nombre, SKU o Categoría..." oninput="filterInventory()">
+                </div>
+
+                <div class="table-card">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Producto</th>
+                                    <th>Descripción</th>
+                                    <th>Categoría</th>
+                                    <th>Marca</th>
+                                    <th>Unidad</th>
+                                    <th>Proveedor</th>
+                                    <th style="text-align: center;">Stock</th>
+                                    <th style="text-align: center;">Mínimo</th>
+                                    <th>Precio Compra</th>
+                                    <th>Precio Venta</th>
+                                    <th>Valor Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory_body">
+                                <!-- Los productos se cargarán aquí dinámicamente -->
+                                <tr><td colspan="10" class="loading">Cargando inventario...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Formulario de Producto -->
+    <div id="product_modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal_title" style="margin-top:0; margin-bottom:25px;">Añadir Nuevo Producto</h2>
+            <form id="product_form">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Código / SKU *</label>
+                        <input type="text" id="p_codigo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del Producto *</label>
+                        <input type="text" id="p_nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <input type="text" id="p_categoria" placeholder="Ej. Construcción">
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" id="p_marca" placeholder="Ej. Aceros Arequipa">
+                    </div>
+                    <div class="form-group">
+                        <label>Proveedor</label>
+                        <select id="p_proveedor_id">
+                            <option value="">-- Sin Proveedor --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad de Medida</label>
+                        <input type="text" id="p_unidad" list="unidades_list" placeholder="Ej: Unidad (und)">
+                        <datalist id="unidades_list">
+                            <option value="UNIDAD">
+                            <option value="MILLAR">
+                            <option value="CIENTO">
+                            <option value="DOCENA">
+                            <option value="METRO (m)">
+                            <option value="KILO (kg)">
+                            <option value="BOLSA">
+                            <option value="CAJA">
+                            <option value="PAQUETE">
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Actual</label>
+                        <input type="number" id="p_stock" value="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Mínimo</label>
+                        <input type="number" id="p_stock_min" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio de Compra (S/)</label>
+                        <input type="number" id="p_precio_compra" value="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio de Venta (S/)</label>
+                        <input type="number" id="p_precio" step="0.01" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Descripción / Notas</label>
+                        <textarea id="p_descripcion" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">CANCELAR</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;">GUARDAR PRODUCTO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Gestionar Unidades Múltiples -->
+    <div id="units_modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 id="units_modal_title">Unidades y Presentaciones</h2>
+                <button onclick="document.getElementById('units_modal').style.display='none'" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+                    <i class="fas fa-info-circle"></i> Configure presentaciones adicionales. 
+                    Ej: <strong>Docena</strong> (Factor: 12), <strong>Ciento</strong> (Factor: 100).
+                </p>
+                <form id="unit_form" onsubmit="event.preventDefault(); saveNewUnit();" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size: 11px;">Nombre Unidad</label>
+                        <input type="text" id="u_nombre" placeholder="Ej: Docena" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size: 11px;">Contiene (Unid.)</label>
+                        <input type="number" id="u_factor" placeholder="12" step="0.01" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label style="font-size: 11px;">Precio Venta</label>
+                        <input type="number" id="u_precio" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px;"><i class="fas fa-plus"></i></button>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Presentación</th>
+                            <th>Factor</th>
+                            <th>Precio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="units_tbody">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Kardex por Producto -->
+    <div id="kardex_modal" class="modal">
+        <div class="modal-content" style="max-width: 850px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 id="kardex_title">Kardex de Producto</h2>
+                <button onclick="closeKardexModal()" class="btn btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            
+            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Documento</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kardex_tbody">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Papelera -->
+    <div id="trash_modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin: 0;"><i class="fas fa-trash-alt"></i> Papelera de Productos (3 días)</h2>
+                <button onclick="closeTrashModal()" class="btn-secondary" style="padding:5px 10px;">&times;</button>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Eliminado el</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trash_body">
+                        <!-- Se llena vía JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script src="common.js"></script>
     <script src="script.js"></script>
     <script>checkAccess();</script>
+</body>
+</html>
 </body>
 </html>
