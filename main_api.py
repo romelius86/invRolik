@@ -691,3 +691,11 @@ if __name__ == "__main__":
     import uvicorn
     # Cambiamos al puerto 8001 para evitar conflictos
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
+@app.post("/login")
+def login(req: LoginRequest):
+    # Aquí llamas a tu función de base de datos para validar
+    user = database.verify_user(req.username, req.password) 
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    return {"success": True, "user": user}
