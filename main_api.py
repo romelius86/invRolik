@@ -2,13 +2,9 @@ import sys
 import os
 import html
 
-# Como ahora todo está en el mismo nivel, añadimos el directorio actual al path
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 import database
 
 from pydantic import BaseModel
@@ -689,14 +685,7 @@ def obtener_ticket_html(id: int, format: str = "80mm"):
             return HTMLResponse(content=html)
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
-# --- SERVIR FRONTEND ---
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pagina_web"))
-print(f"DEBUG: Sirviendo archivos estáticos desde: {frontend_path}")
 
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
-else:
-    print(f"CRITICAL: No se encontró la carpeta del frontend en {frontend_path}")
 
 if __name__ == "__main__":
     import uvicorn
