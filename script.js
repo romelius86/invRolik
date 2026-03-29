@@ -1,5 +1,5 @@
 // 1. Configuración de la URL del servidor
-const API_URL = 'https://invrolik-2.onrender.com'; 
+const API_URL = 'https://invrolik-6.onrender.com'; 
 
 // Variables globales
 let allInventory = [];
